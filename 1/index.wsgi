@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from bottle import Bottle, run, static_file
 # sae no include python markdown library, we need
@@ -39,8 +40,16 @@ def hello():
     """
     bkt = Bucket("blog")
     articles = []
+
+    ## sort article by modify time
+    def _sort_key(item):
+        return datetime.strptime(item.last_modified,
+                                "%Y-%m-%dT%H:%M:%S.%f")
+    article_list = sorted(bkt.list(), key=_sort_key)
+    article_list = article_list[::-1]
+
     ## list all article in blog bucket in storage
-    for i in bkt.list():
+    for i in article_list:
         if i.name.endswith(".md"):
             article = bkt.get_object_contents(i.name)
             article = markdown.markdown(article.decode("UTF-8"))
